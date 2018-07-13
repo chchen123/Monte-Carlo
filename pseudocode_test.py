@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """
-Created on Thu Jul 12 10:36:19 2018
+Created on Fri Jul 13 14:04:09 2018
 
 @author: chen
 """
@@ -11,24 +11,21 @@ import pytpc
 import yaml
 from math import pi
 import h5py
-import argparse
 import logging
 import logging.config
 
 logger = logging.getLogger(__name__)
 
-parser = argparse.ArgumentParser(description='A script for the Monte Carlo Fitting')
-parser.add_argument('config', help='Path to a config file')
-parser.add_argument('input', help='path to an input event file')
-parser.add_argument('output', help='the output HDF5 file')
-args = parser.parse_args()
+config_path = '/mnt/home/mkuchera/ATTPC/ar40_reqfiles/config_e15503a_runs_105-137.yml'
+input_path = '/mnt/research/attpc/data/e15503a/hdf5_cleaned/clean_run_0102.h5'
+output_path = '/mnt/research/attpc/data/e15503a/mc_test/run_0102.h5'
 
-run_ID = args.input[-11:-3]
+run_ID = input_path[-11:-3]
 
-with open(args.config, 'r') as f:
+with open(config_path, 'r') as f:
     config = yaml.load(f)
 
-inFile = h5py.File(args.input, 'r')
+inFile = h5py.File(input_path, 'r')
 dataset_name = '/clean'
 evt_inFile = inFile[dataset_name]
 
@@ -57,8 +54,9 @@ def event_iterator(input_evtid_set, output_evtid_set):
 for i in range(len(evt_inFile)):
     if i < 20:
         evtids = np.append(evtids, [i])
-        
-with h5py.File(args.output, 'w') as outFile:
+
+
+with h5py.File(output_path, 'w') as outFile:
     gp = outFile.require_group('monte carlo')
     input_evtid_set = {int(k) for k in evtids}
     num_input_evts = len(input_evtid_set)
