@@ -1,19 +1,19 @@
 #!/bin/bash
 #PBS -N MonteCarloTest105-119
 #PBS -j oe
-#PBS -o /mnt/home/mkuchera/ATTPC/ar40_jobs/MonteCarlo/MC_output.o
-#PBS -l walltime=20:00:00
+#PBS -o /mnt/home/mkuchera/ATTPC/ar46_jobs/MC_output.o
+#PBS -l walltime=80:00:00
 #PBS -l nodes=1:ppn=1
 #PBS -l pmem=5gb
 #PBS -m a
 #PBS -M chchen@davidson.edu
-echo $RUN_NUM
+
 RUN_NUM_PADDED=`printf "%04d" ${RUN_NUM}`
 echo "$RUN_NUM_PADDED"
 
-CONFIG_FILE="/mnt/home/mkuchera/ATTPC/ar40_reqfiles/config_e15503a_runs_105-137.yml"
-DATA_ROOT="/mnt/research/attpc/data/e15503a/hdf5_cleaned"
-OUTPUT_DIR="/mnt/research/attpc/data/e15503a/mc_test"
+CONFIG_FILE="/mnt/home/mkuchera/ATTPC/ar46_reqfiles/config_e15503b_p.yml"
+DATA_ROOT="/mnt/research/attpc/analysis/e15503b/cleanh5"
+OUTPUT_DIR="/mnt/research/attpc/data/e15503b/mc_test"
 
 INPUT_FILE=${DATA_ROOT}/clean_run_${RUN_NUM_PADDED}.h5
 OUTPUT_FILE=${OUTPUT_DIR}/run_${RUN_NUM_PADDED}.h5

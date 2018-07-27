@@ -1,6 +1,6 @@
 #!/bin/bash
 
-for value in {120..137}
+for value in {120..125}
 do
   RUN_NUM=$value
   export RUN_NUM
