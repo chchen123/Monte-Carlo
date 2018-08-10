@@ -1,8 +1,8 @@
-### Optimization Methods for Track Fitting in the Active-Target Time Projection Chamber
+## Optimization Methods for Track Fitting in the Active-Target Time Projection Chamber
 
 This repository contains the code made in summer 2018 for analyzing global and local optimization methods for the track fitting process. 
 
-### Packages
+## Packages
 
 Following Python packages are required for using the code:
 - pytpc
@@ -14,17 +14,22 @@ Following Python packages are required for using the code:
 
 The code is written in Python 3.6.
 
-### Global Track-Fitting Methods
+## Global Track-Fitting Methods
+
 - naive Monte Carlo method
 - differential evolution
 - basin hopping
 
-### Folders
+## Folders
+
 - **hpc-scripts**
- - Contains shell scripts for hpc job submission 
- - Contains Python files for MC fitting 
+
+  - Contains shell scripts for hpc job submission 
+  - Contains Python files for MC fitting 
 - **jupyter notebooks**
- - Contains the code used to analyze different real and simulated proton events
- - Contains the plots of track fitting using different global and local optimization methods
+
+  - Contains the code used to analyze different real and simulated proton events
+  - Contains the plots of track fitting using different global and local optimization methods
 - **proton-classification**
- - Contains codes for using Keras model to classify proton events
+
+  - Contains codes for using Keras model to classify proton events
