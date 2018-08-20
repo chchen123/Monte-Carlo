@@ -2,8 +2,9 @@
 # -*- coding: utf-8 -*-
 """
 Created on Tue Aug  7 10:06:20 2018
-
 @author: chen
+This script fits all the proton events, selected using Jack Taylor's NN model, in a designated run.
+(not finished)
 """
 
 import numpy as np
@@ -120,8 +121,7 @@ with h5py.File(output_path, 'w') as outFile:
             except Exception:
                 logger.exception('Monte Carlo fitting failed for event with index %d', evt_index)
                 continue        
-            
-            try
+                
             try:
                 dset = gp.create_dataset('{:d}'.format(evt_index), data=chi_values, compression='gzip')
             except Exception:
