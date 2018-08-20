@@ -2,8 +2,9 @@
 # -*- coding: utf-8 -*-
 """
 Created on Thu Jul 12 10:36:19 2018
-
 @author: chen
+This Python script fits each event of a designated run using the naive Monte Carlo method.
+Expected to be called within a Bash script.
 """
 
 import numpy as np
