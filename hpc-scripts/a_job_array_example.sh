@@ -9,8 +9,10 @@
 #PBS -M chchen@davidson.edu 
 #PBS -t 120-122
 
-echo ${PBS_ARRAYID}
+#This script is used to submit a job array.
+#The system only runs 5 jobs at a time, so to submit up to 15 jobs individually please use submit_jobs.sh
 
+echo ${PBS_ARRAYID}
 
 RUN_NUM=$PBS_ARRAYID
 RUN_NUM_PADDED=`printf "%04d" ${PBS_ARRAYID}`
