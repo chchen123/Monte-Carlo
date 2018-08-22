@@ -25,6 +25,7 @@ parser.add_argument('output', help='the output HDF5 file')
 args = parser.parse_args()
 
 run_ID = args.input[-11:-3]
+DETECTOR_LENGTH = 1250.0
 
 with open(args.config, 'r') as f:
     config = yaml.load(f)
@@ -67,14 +68,22 @@ with h5py.File(args.output, 'w') as outFile:
     
     for evt_index in event_iterator(input_evtid_set, output_evtid_set):
         try:
+            new_xyzs = []
             xyzs_h5 = evt_inFile[str(evt_index)]
             xyzs = np.array(xyzs_h5)
-            xy = xyzs[:, 0:2]
         except Exception:
             logger.exception('Failed to read event with index %d from input', evt_index)
             continue
-
+        
         try:
+            for point in xyzs:
+                if (point[2] > DETECTOR_LENGTH):
+                    raise ValueError('event is not physical')
+        except Exception:
+                logger.exception('Event index %d deleted: non-physical evet', evt_index)
+                continue
+        try:
+            xy = xyzs[:, 0:2]
             xy_C = np.ascontiguousarray(xy, dtype=np.double)
             cx, cy = pytpc.cleaning.hough_circle(xy_C)
         except Exception:
