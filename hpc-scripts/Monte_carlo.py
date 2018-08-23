@@ -95,7 +95,14 @@ with h5py.File(args.output, 'w') as outFile:
         except ValueError:
                 logger.exception('Event index %d deleted: non-physical evet', evt_index)
                 continue
-            
+        
+        # further clean the points that are more than 75mm away from the unfolded spiral
+        del_list = []
+        for i in range(len(xyzs)):
+            if xyzs[i,6] > 75.0:
+                del_list.append(i)
+        xyzs = np.delete(xyzs, del_list, axis=0)
+        
         #find the center of curvature of each event's track
         try:
             xy = xyzs[:, 0:2]
