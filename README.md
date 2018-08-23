@@ -1,6 +1,6 @@
 ## Optimization Methods for Track Fitting in the Active-Target Time Projection Chamber
 
-This repository contains the code made in summer 2018 for analyzing global and local optimization methods for the track fitting process. 
+This repository contains the code made in 2018-2019 for analyzing global and local optimization methods for the track fitting process. 
 
 ## Packages
 
