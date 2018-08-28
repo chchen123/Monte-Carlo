@@ -4,7 +4,6 @@
 Created on Tue Aug  7 10:06:20 2018
 @author: chen
 This script fits all the proton events, selected using Jack Taylor's NN model, in a designated run.
-(not finished)
 """
 
 import numpy as np
@@ -17,21 +16,17 @@ import logging.config
 
 logger = logging.getLogger(__name__)
 
-#parser = argparse.ArgumentParser(description='A script for the Monte Carlo Fitting')
-#parser.add_argument('config', help='Path to a config file')
-#parser.add_argument('input', help='path to an input event file')
-#parser.add_argument('output', help='the output HDF5 file')
-#parser.add_argument('proton', help='path to file containing proton-like evts')
-#args = parser.parse_args()
-
+#defining paths
+run_num = 122
 config_path = '/home/chen/ar46/config/config_e15503b_p.yml'
-input_path = '/home/chen/ar46/clean_events/clean_run_0131.h5'
-output_path = '/home/chen/data/proton_0131.h5'
-proton_path = '/home/chen/data/keras-results/pCnoise/proton_events_0131.txt'
-
-
+input_path = '/home/chen/ar46/clean_events/clean_run_0'+str(run_num)+'.h5'
+output_path = '/home/chen/data/proton_0'+str(run_num)+'.h5'
+proton_path = '/home/chen/data/keras-results/pCnoise/proton_events_0'+str(run_num)+'.txt'
 
 run_ID = input_path[-11:-3]
+DETECTOR_LENGTH = 1250.0
+DRIFT_VEL = 5.2
+CLOCK = 12.5 
 
 with open(config_path, 'r') as f:
     config = yaml.load(f)
@@ -44,24 +39,7 @@ mcfitter = pytpc.fitting.MCFitter(config)
 chi_values = np.empty(shape=(0,0))
 proton_evts = np.empty(shape=(0,0))
 
-#def event_iterator(input_evtid_set, output_evtid_set):
-#    unprocessed_events = input_evtid_set - output_evtid_set
-#    num_input_evts = len(input_evtid_set)
-#    num_events_remaining = len(unprocessed_events)
-#    num_events_finished = len(output_evtid_set)
-#    if num_events_remaining == 0:
-#        logger.warning('All events have already been processed.')
-#        raise StopIteration()
-#    elif num_events_finished > 0:
-#        logger.info('Already processed %d events. Continuing from where we left off.', num_events_finished)
-#
-#    for i in unprocessed_events:
-#        if i % 100 == 0:
-#            logger.info('Processed %d / %d events', i, num_input_evts)
-#        yield i
-#    else:
-#        raise StopIteration()
-#        
+#read and append the event IDs for proton events
 with open(proton_path, "r") as output:
     for i in output:
         i = i[:-1]
@@ -69,38 +47,49 @@ with open(proton_path, "r") as output:
         
 with h5py.File(output_path, 'w') as outFile:
     gp = outFile.require_group('monte carlo')
-#    input_evtid_set = {int(k) for k in evtids}
-#    print(input_evtid_set)
-#    num_input_evts = len(input_evtid_set)
-#    logger.info('Input file contains %d events', num_input_evts)
-#    output_evtid_set = {int(k) for k in gp}
-
-#    full_evt_ID = []
-#    for i in range(len(evt_inFile)):
-#        full_evt_ID.append(i)
-#    print(len(full_evt_ID))
     for evt_index in range(len(evt_inFile)):
         try:
+            #testing if each event exists
             xyzs_h5 = evt_inFile[str(evt_index)]
         except Exception:
+            #if a certain event does not exist, leave out the empty event index so that proton event ID 
+            #fits the total event ID 
             for i in range(len(proton_evts)):
                 if proton_evts[i] >= evt_index:
                     proton_evts[i] += 1
+            continue
+        
         if evt_index in proton_evts:
-            print(evt_index)
             try:
                 del_list = []
                 xyzs_h5 = evt_inFile[str(evt_index)]
                 xyzs = np.array(xyzs_h5)
                 for i in range(len(xyzs)):
-                    if (xyzs[i,6]) > 75.0:
+                    #disregard the points that have time bucket index<500
+                    if (xyzs[i][2])*CLOCK/DRIFT_VEL < 500.0:
                         del_list.append(i)
-                xyzs = np.delete(xyzs,del_list,axis=0)
+                    #disregard the points that have less than two neighbors
+                    elif (xyzs[i][5] < 2.0): 
+                        del_list.append(i) 
+                    #delete points that are more than 40mm away from the unfolded spiral
+                    elif xyzs[i][6] > 40.0:
+                        del_list.append(i)
+                xyzs = np.delete(xyzs, del_list, axis=0)
                 xy = xyzs[:, 0:2]
             except Exception:
                 logger.exception('Failed to read event with index %d from input', evt_index)
                 continue
-    
+            
+            #check if the z-coordinate is located within the length detector
+            try:
+                for point in xyzs:
+                    if (point[2] > DETECTOR_LENGTH):
+                        raise ValueError('event is not physical') #disregard the non-physical events
+            except ValueError:
+                logger.exception('Event index %d deleted: non-physical evet', evt_index)
+                continue
+            
+            #find the center of curvature of each event's track
             try:
                 xy_C = np.ascontiguousarray(xy, dtype=np.double)
                 cx, cy = pytpc.cleaning.hough_circle(xy_C)
@@ -108,12 +97,14 @@ with h5py.File(output_path, 'w') as outFile:
                 logger.exception('Cannot find the center of curvature for event with index %d', evt_index)
                 continue
             
+            #preprocess each event
             try:
                 uvw, (cu, cv) = mcfitter.preprocess(xyzs[:,0:5], center=(cx, cy), rotate_pads=False)
             except Exception:
                 logger.exception('Failed to preprocess event with index %d', evt_index)
                 continue
             
+            #fit each event with naive Monte Carlo method
             try:
                 mcres, minChis, all_params, good_param_idx = mcfitter.process_event(uvw, cu, cv, return_details=True)
                 if np.isnan(mcres['posChi2']) != True:
@@ -121,7 +112,8 @@ with h5py.File(output_path, 'w') as outFile:
             except Exception:
                 logger.exception('Monte Carlo fitting failed for event with index %d', evt_index)
                 continue        
-                
+            
+            #write the results for each event onto the .h5 file
             try:
                 dset = gp.create_dataset('{:d}'.format(evt_index), data=chi_values, compression='gzip')
             except Exception:

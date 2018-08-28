@@ -26,6 +26,8 @@ args = parser.parse_args()
 
 run_ID = args.input[-11:-3]
 DETECTOR_LENGTH = 1250.0
+DRIFT_VEL = 5.2
+CLOCK = 12.5 
 
 #load configurations
 with open(args.config, 'r') as f:
@@ -96,13 +98,32 @@ with h5py.File(args.output, 'w') as outFile:
                 logger.exception('Event index %d deleted: non-physical evet', evt_index)
                 continue
         
-        # further clean the points that are more than 75mm away from the unfolded spiral
+        try:
+            if len(xyzs) < 50:
+                raise ValueError('event has too few data points')
+        except ValueError:
+            logger.exception('Event index %d deleted: non-physical evet', evt_index)
+            continue
+        
         del_list = []
         for i in range(len(xyzs)):
-            if xyzs[i,6] > 75.0:
+            #disregard the points that have time bucket index<500
+            if (xyzs[i][2])*CLOCK/DRIFT_VEL < 500.0:
+                del_list.append(i)
+            #disregard the points that have less than two neighbors
+            elif (xyzs[i][5] < 2.0): 
+                del_list.append(i) 
+            #delete points that are more than 40mm away from the unfolded spiral
+            elif xyzs[i][6] > 40.0:
                 del_list.append(i)
         xyzs = np.delete(xyzs, del_list, axis=0)
-        
+
+#        del_list = []
+#        for i in range(len(xyzs)):
+#            if xyzs[i,6] > 40.0:
+#                del_list.append(i)
+#        xyzs = np.delete(xyzs, del_list, axis=0)
+#        
         #find the center of curvature of each event's track
         try:
             xy = xyzs[:, 0:2]
