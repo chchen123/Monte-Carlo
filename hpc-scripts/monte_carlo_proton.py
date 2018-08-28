@@ -51,6 +51,7 @@ with h5py.File(output_path, 'w') as outFile:
         try:
             #testing if each event exists
             xyzs_h5 = evt_inFile[str(evt_index)]
+            xyzs = np.array(xyzs_h5)
         except Exception:
             #if a certain event does not exist, leave out the empty event index so that proton event ID 
             #fits the total event ID 
@@ -60,13 +61,28 @@ with h5py.File(output_path, 'w') as outFile:
             continue
         
         if evt_index in proton_evts:
+            #check if the z-coordinate is located within the length detector
+            try:
+                for point in xyzs:
+                    if (point[2] > DETECTOR_LENGTH):
+                        raise ValueError('event is not physical') #disregard the non-physical events
+            except ValueError:
+                logger.exception('Event index %d deleted: non-physical evet', evt_index)
+                continue
+            
+            #delete events that have less than 50 data points
+            try:
+                if len(xyzs) < 50:
+                    raise ValueError('event has too few data points')
+            except ValueError:
+                logger.exception('Event index %d deleted: non-physical evet', evt_index)
+                continue
+            
             try:
                 del_list = []
-                xyzs_h5 = evt_inFile[str(evt_index)]
-                xyzs = np.array(xyzs_h5)
                 for i in range(len(xyzs)):
-                    #disregard the points that have time bucket index<500
-                    if (xyzs[i][2])*CLOCK/DRIFT_VEL < 500.0:
+                    #disregard the points that have time bucket index>500
+                    if (xyzs[i][2])*CLOCK/DRIFT_VEL > 500.0:
                         del_list.append(i)
                     #disregard the points that have less than two neighbors
                     elif (xyzs[i][5] < 2.0): 
@@ -78,15 +94,6 @@ with h5py.File(output_path, 'w') as outFile:
                 xy = xyzs[:, 0:2]
             except Exception:
                 logger.exception('Failed to read event with index %d from input', evt_index)
-                continue
-            
-            #check if the z-coordinate is located within the length detector
-            try:
-                for point in xyzs:
-                    if (point[2] > DETECTOR_LENGTH):
-                        raise ValueError('event is not physical') #disregard the non-physical events
-            except ValueError:
-                logger.exception('Event index %d deleted: non-physical evet', evt_index)
                 continue
             
             #find the center of curvature of each event's track
