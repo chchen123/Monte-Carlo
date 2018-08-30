@@ -5,6 +5,8 @@ Created on Thu Jul 12 10:36:19 2018
 @author: chen
 This Python script fits each event of a designated run using the naive Monte Carlo method.
 Expected to be called within a Bash script.
+
+returns the Monte Carlo results of total Chi^2 values.
 """
 
 import numpy as np
@@ -98,14 +100,6 @@ with h5py.File(args.output, 'w') as outFile:
                 logger.exception('Event index %d deleted: non-physical evet', evt_index)
                 continue
             
-        #delete events that have less than 50 data points
-        try:
-            if len(xyzs) < 50:
-                raise ValueError('event has too few data points')
-        except ValueError:
-            logger.exception('Event index %d deleted: non-physical evet', evt_index)
-            continue
-        
         del_list = []
         for i in range(len(xyzs)):
             #disregard the points that have time bucket index>500
@@ -118,7 +112,15 @@ with h5py.File(args.output, 'w') as outFile:
             elif xyzs[i][6] > 40.0:
                 del_list.append(i)
         xyzs = np.delete(xyzs, del_list, axis=0)
-       
+        
+        #delete events that have less than 50 data points
+        try:
+            if len(xyzs) < 50:
+                raise ValueError('event has too few data points')
+        except ValueError:
+            logger.exception('Event index %d deleted: non-physical evet', evt_index)
+            continue
+        
         #find the center of curvature of each event's track
         try:
             xy = xyzs[:, 0:2]
