@@ -7,7 +7,6 @@ Created on Fri Sep  7 16:00:05 2018
 This script fits run_1030's first 1001 events with differential evolution.
 """
 
-
 import numpy as np
 import pytpc
 from pytpc.fitting.mcopt_wrapper import Minimizer
@@ -23,7 +22,6 @@ parser.add_argument('config', help='Path to a config file')
 parser.add_argument('input', help='path to an input event file')
 parser.add_argument('output', help='the output HDF5 file')
 args = parser.parse_args()
-
 
 bounds = [(-1,1), (-1, 1), (0, 1), (0,5), (-2 * pi, 2 * pi), (-2 * pi, 2 * pi)]
 
@@ -48,9 +46,16 @@ num_iters = config['num_iters']
 num_pts = config['num_pts']
 red_factor = config['red_factor']
 
+chi_position = np.empty(shape=(0,0))
+chi_energy = np.empty(shape=(0,0))
+chi_vert = np.empty(shape=(0,0))
+
 #writing output files
 with h5py.File(args.output, 'w') as outFile:
-    gp = outFile.require_group('differential evolution')
+    gp0 = outFile.require_group('total')
+    gp1 = outFile.require_group('position')
+    gp2 = outFile.require_group('energy')
+    gp3 = outFile.require_group('vertex')
     for evt_index in range(1002):
         #read events
         try:
@@ -68,7 +73,7 @@ with h5py.File(args.output, 'w') as outFile:
         except ValueError:
                 print('Event index %d deleted: non-physical evet '+str(evt_index))
                 continue
-
+        
         #find the center of curvature of each event's track
         try:
             xy = xyzs[:, 0:2]
@@ -96,30 +101,45 @@ with h5py.File(args.output, 'w') as outFile:
             continue
         
         #define the objective function
-        def f(y):
+        def chi2(y,add_chi2=False):
+            global chi_position
+            global chi_energy
+            global chi_vert
             ctr = np.zeros([1,6])
             ctr[0] = y
             chi_result = minimizer.run_tracks(ctr, exp_pos, exp_hits)
+            if add_chi2 == True: 
+                #add the individual component of chi^2 values once the total chi^2 is minimized
+                chi_position = np.append(chi_position, chi_result[0][0])
+                chi_energy = np.append(chi_energy, chi_result[0][1])
+                chi_vert = np.append(chi_vert, chi_result[0][2])
             return sum(chi_result[0])
 
         #fit each event with differential evolution method
         try:
-            results = scipy.optimize.differential_evolution(f, bounds,\
+            results = scipy.optimize.differential_evolution(chi2, bounds,\
                                                             maxiter=1000, strategy='best1bin', recombination=0.7, popsize=15, mutation=(0.5,1.5))
             if np.isnan(results.fun) == True: # disregard the NaN results
                 raise ValueError('event is not physical')
             chi_values = np.append(chi_values, results.fun)
+            chi2(results.x,add_chi2=True)
         except Exception:
             print('Differential evolution fitting failed for event with index '+str(evt_index))
-            continue        
-        
+            continue  
+            
         #write the results for each event onto the .h5 file
         try:
-            dset = gp.create_dataset('{:d}'.format(evt_index), data=chi_values, compression='gzip')
+            dset0 = gp0.create_dataset('{:d}'.format(evt_index), data=chi_values, compression='gzip')
+            dset1 = gp1.create_dataset('{:d}'.format(evt_index), data=chi_position, compression='gzip')
+            dset2 = gp2.create_dataset('{:d}'.format(evt_index), data=chi_energy, compression='gzip')
+            dset3 = gp3.create_dataset('{:d}'.format(evt_index), data=chi_vert, compression='gzip')
         except Exception:
             print('Writing to HDF5 failed for event with index '+str(evt_index))
             continue
         
         chi_values = np.empty(shape=(0,0))
+        chi_position = np.empty(shape=(0,0))
+        chi_energy = np.empty(shape=(0,0))
+        chi_vert = np.empty(shape=(0,0))
 
 print('MC fitting complete for '+run_ID)

@@ -15,7 +15,6 @@ import yaml
 import h5py
 import argparse
 import scipy
-from math import pi
 
 #define user inputs for the Bash scripts
 parser = argparse.ArgumentParser(description='A script for the Differential Evolution Fitting')
@@ -23,9 +22,6 @@ parser.add_argument('config', help='Path to a config file')
 parser.add_argument('input', help='path to an input event file')
 parser.add_argument('output', help='the output HDF5 file')
 args = parser.parse_args()
-
-
-bounds = [(-1,1), (-1, 1), (0, 1), (0,5), (-2 * pi, 2 * pi), (-2 * pi, 2 * pi)]
 
 run_ID = args.input[-11:-3]
 DETECTOR_LENGTH = 1250.0
@@ -48,9 +44,16 @@ num_iters = config['num_iters']
 num_pts = config['num_pts']
 red_factor = config['red_factor']
 
+chi_position = np.empty(shape=(0,0))
+chi_energy = np.empty(shape=(0,0))
+chi_vert = np.empty(shape=(0,0))
+
 #writing output files
 with h5py.File(args.output, 'w') as outFile:
-    gp = outFile.require_group('basinhopping')
+    gp0 = outFile.require_group('total')
+    gp1 = outFile.require_group('position')
+    gp2 = outFile.require_group('energy')
+    gp3 = outFile.require_group('vertex')
     for evt_index in range(1002):
         #read events
         try:
@@ -117,30 +120,45 @@ with h5py.File(args.output, 'w') as outFile:
             continue
         
         #define the objective function
-        def f(y):
+        def chi2(y,add_chi2=False):
+            global chi_position
+            global chi_energy
+            global chi_vert
             ctr = np.zeros([1,6])
             ctr[0] = y
             chi_result = minimizer.run_tracks(ctr, exp_pos, exp_hits)
+            if add_chi2 == True: 
+                #add the individual component of chi^2 values once the total chi^2 is minimized
+                chi_position = np.append(chi_position, chi_result[0][0])
+                chi_energy = np.append(chi_energy, chi_result[0][1])
+                chi_vert = np.append(chi_vert, chi_result[0][2])
             return sum(chi_result[0])
-
+        
         #fit each event with differential evolution method
         try:
-            results = scipy.optimize.basinhopping(f,ctr0, niter=25, T=0.01, \
+            results = scipy.optimize.basinhopping(chi2, ctr0, niter=25, T=0.01, \
                                                   stepsize=0.05, minimizer_kwargs={"method": 'SLSQP'})
             if np.isnan(results.fun) == True: # disregard the NaN results
                 raise ValueError('event is not physical')
             chi_values = np.append(chi_values, results.fun)
+            chi2(results.x,add_chi2=True)
         except Exception:
             print('Differential evolution fitting failed for event with index '+str(evt_index))
             continue        
         
         #write the results for each event onto the .h5 file
         try:
-            dset = gp.create_dataset('{:d}'.format(evt_index), data=chi_values, compression='gzip')
+            dset0 = gp0.create_dataset('{:d}'.format(evt_index), data=chi_values, compression='gzip')
+            dset1 = gp1.create_dataset('{:d}'.format(evt_index), data=chi_position, compression='gzip')
+            dset2 = gp2.create_dataset('{:d}'.format(evt_index), data=chi_energy, compression='gzip')
+            dset3 = gp3.create_dataset('{:d}'.format(evt_index), data=chi_vert, compression='gzip')
         except Exception:
             print('Writing to HDF5 failed for event with index '+str(evt_index))
             continue
         
         chi_values = np.empty(shape=(0,0))
+        chi_position = np.empty(shape=(0,0))
+        chi_energy = np.empty(shape=(0,0))
+        chi_vert = np.empty(shape=(0,0))
 
 print('MC fitting complete for '+run_ID)
