@@ -13,10 +13,10 @@ import h5py
 import numpy as np
 import yaml
 
-run = '0210'
+run = '0130'
 
 data_path = '/home/chen/ar46/clean_events/clean_run_'+run+'.h5'
-output_path = '/home/chen/ar46/proton_chi_values/run_'+run+'.h5'
+output_path = '/home/chen/ar46/MonteCarlo/proton_chi_values/run_'+run+'_proton.h5'
 config_path = '/home/chen/ar46/config/config_e15503b_p.yml'
 
 labels = pd.read_csv('/home/chen/data/real/' + "run_" + run + "_labels.csv", sep=',')
@@ -30,14 +30,19 @@ with open(config_path, 'r') as f:
 mcfitter = pytpc.fitting.MCFitter(config)
 
 chi_values = np.empty(shape=(0,0))
-
+chi_position = np.empty(shape=(0,0))
+chi_energy = np.empty(shape=(0,0))
+chi_vert = np.empty(shape=(0,0))
 
 inFile = h5py.File(data_path, 'r')
 dataset_name = '/clean'
 evt_inFile = inFile[dataset_name]
 
 with h5py.File(output_path, 'w') as outFile:
-    gp = outFile.require_group('monte carlo')
+    gp0 = outFile.require_group('total')
+    gp1 = outFile.require_group('position')
+    gp2 = outFile.require_group('energy')
+    gp3 = outFile.require_group('vertex')
     for event_index in range(len(evt_inFile)):
         if event_index in p_indices:
             try:
@@ -83,14 +88,22 @@ with h5py.File(output_path, 'w') as outFile:
                     raise ValueError('event is not physical')
                 else: 
                     chi_values = np.append(chi_values, [mcres['posChi2']+mcres['enChi2']+mcres['vertChi2']])
+                    chi_position = np.append(chi_position, [mcres['posChi2']])
+                    chi_energy = np.append(chi_energy, [mcres['enChi2']])
+                    chi_vert = np.append(chi_vert, [mcres['vertChi2']])
             except Exception:
                 continue        
                     
             #write the results for each event onto the .h5 file
             try:
-                dset = gp.create_dataset('{:d}'.format(event_index), data=chi_values, compression='gzip')
+                dset0 = gp0.create_dataset('{:d}'.format(event_index), data=chi_values, compression='gzip')
+                dset1 = gp1.create_dataset('{:d}'.format(event_index), data=chi_position, compression='gzip')
+                dset2 = gp2.create_dataset('{:d}'.format(event_index), data=chi_energy, compression='gzip')
+                dset3 = gp3.create_dataset('{:d}'.format(event_index), data=chi_vert, compression='gzip')
             except Exception:
                 continue
                         
             chi_values = np.empty(shape=(0,0))
-                  
+            chi_position = np.empty(shape=(0,0))
+            chi_energy = np.empty(shape=(0,0))
+            chi_vert = np.empty(shape=(0,0))                 

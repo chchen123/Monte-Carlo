@@ -13,26 +13,24 @@ import numpy as np
 import pytpc
 import yaml
 import h5py
-import argparse
 
 #define user inputs for the Bash scripts
-parser = argparse.ArgumentParser(description='A script for the Monte Carlo Fitting')
-parser.add_argument('config', help='Path to a config file')
-parser.add_argument('input', help='path to an input event file')
-parser.add_argument('output', help='the output HDF5 file')
-args = parser.parse_args()
+data_path = '/home/chen/ar46/clean_events/clean_run_0130.h5'
+output_path = '/home/chen/ar46/MonteCarlo/chi_values/run_0130.h5'
+config_path = '/home/chen/ar46/config/config_e15503b_p.yml'
 
-run_ID = args.input[-11:-3]
+
+run_ID = data_path[-11:-3]
 DETECTOR_LENGTH = 1250.0
 DRIFT_VEL = 5.2
 CLOCK = 12.5 
 
 #load configurations
-with open(args.config, 'r') as f:
+with open(config_path, 'r') as f:
     config = yaml.load(f)
 
 #load (cleaned) real events
-inFile = h5py.File(args.input, 'r')
+inFile = h5py.File(data_path, 'r')
 dataset_name = '/clean'
 evt_inFile = inFile[dataset_name]
 
@@ -44,13 +42,13 @@ chi_energy = np.empty(shape=(0,0))
 chi_vert = np.empty(shape=(0,0))
 
 #writing output files
-with h5py.File(args.output, 'w') as outFile:
+with h5py.File(output_path, 'w') as outFile:
     gp0 = outFile.require_group('total')
     gp1 = outFile.require_group('position')
     gp2 = outFile.require_group('energy')
     gp3 = outFile.require_group('vertex')
     
-    for evt_index in range(len(evt_inFile)):
+    for evt_index in range(1002):
         #read events
         try:
             xyzs_h5 = evt_inFile[str(evt_index)]
