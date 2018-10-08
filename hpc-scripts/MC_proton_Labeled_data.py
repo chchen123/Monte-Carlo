@@ -12,11 +12,12 @@ import pytpc
 import h5py
 import numpy as np
 import yaml
+import time
 
 run = '0130'
 
 data_path = '/home/chen/ar46/clean_events/clean_run_'+run+'.h5'
-output_path = '/home/chen/ar46/MonteCarlo/proton_chi_values/run_'+run+'_proton.h5'
+output_path = '/home/chen/ar46/MonteCarlo/proton_chi_values/run_'+run+'_proton_before_cut.h5'
 config_path = '/home/chen/ar46/config/config_e15503b_p.yml'
 
 labels = pd.read_csv('/home/chen/data/real/' + "run_" + run + "_labels.csv", sep=',')
@@ -37,6 +38,9 @@ chi_vert = np.empty(shape=(0,0))
 inFile = h5py.File(data_path, 'r')
 dataset_name = '/clean'
 evt_inFile = inFile[dataset_name]
+
+sum_values = np.empty(shape=(0,0))
+time_values = np.empty(shape=(0,0))
 
 with h5py.File(output_path, 'w') as outFile:
     gp0 = outFile.require_group('total')
@@ -79,7 +83,10 @@ with h5py.File(output_path, 'w') as outFile:
                     
             #fit each event with naive Monte Carlo method
             try:
+                t0 = time.time()
                 mcres, minChis, all_params, good_param_idx = mcfitter.process_event(uvw, cu, cv, return_details=True)
+                t1 = time.time()
+                
                 if np.isnan(mcres['enChi2']) == True: # disregard the NaN results
                     raise ValueError('event is not physical')
                 elif np.isnan(mcres['posChi2']) == True:
@@ -91,6 +98,12 @@ with h5py.File(output_path, 'w') as outFile:
                     chi_position = np.append(chi_position, [mcres['posChi2']])
                     chi_energy = np.append(chi_energy, [mcres['enChi2']])
                     chi_vert = np.append(chi_vert, [mcres['vertChi2']])
+                    sum_values = np.append(sum_values,chi_values)
+                    print(sum_values)
+                    print("chi^2: " + str(sum(sum_values)/float(len(sum_values))))
+                    time_values = np.append(time_values, t1-t0)
+                    print(time_values)
+                    print("time: " + str(sum(time_values)/float(len(sum_values)))) 
             except Exception:
                 continue        
                     
