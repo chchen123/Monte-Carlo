@@ -150,10 +150,10 @@ with h5py.File(output_path, 'w') as outFile:
                     raise ValueError('event is not physical')
                 chi_values = np.append(chi_values, results.fun)
                 sum_values = np.append(sum_values,chi_values)
-                print(sum_values)
+#                print(sum_values)
                 print("chi^2: " + str(sum(sum_values)/float(len(sum_values))))
                 time_values = np.append(time_values, t1-t0)
-                print(time_values)
+#                print(time_values)
                 print("time: " + str(sum(time_values)/float(len(sum_values))))                
                 chi2(results.x,add_chi2=True)
             except Exception:

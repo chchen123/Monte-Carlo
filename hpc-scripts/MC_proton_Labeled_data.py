@@ -54,18 +54,18 @@ with h5py.File(output_path, 'w') as outFile:
                 xyzs = np.array(xyzs_h5)
             except Exception: #occurs when certain events do not exist
                 continue            
-            del_list = []  
-            for i in range(len(xyzs)):
-                #disregard the points that have time bucket index>500
-                if (xyzs[i][2])*CLOCK/DRIFT_VEL > 500.0:
-                    del_list.append(i)
-                #disregard the points that have less than two neighbors
-                elif (xyzs[i][5] < 2.0): 
-                    del_list.append(i) 
-                #delete points that are more than 40mm away from the unfolded spiral
-                elif xyzs[i][6] > 40.0:
-                    del_list.append(i)
-            xyzs = np.delete(xyzs, del_list, axis=0)
+#            del_list = []  
+#            for i in range(len(xyzs)):
+#                #disregard the points that have time bucket index>500
+#                if (xyzs[i][2])*CLOCK/DRIFT_VEL > 500.0:
+#                    del_list.append(i)
+#                #disregard the points that have less than two neighbors
+#                elif (xyzs[i][5] < 2.0): 
+#                    del_list.append(i) 
+#                #delete points that are more than 40mm away from the unfolded spiral
+#                elif xyzs[i][6] > 40.0:
+#                    del_list.append(i)
+#            xyzs = np.delete(xyzs, del_list, axis=0)
             xy = xyzs[:, 0:2]
         
             #find the center of curvature of each event's track
@@ -99,10 +99,10 @@ with h5py.File(output_path, 'w') as outFile:
                     chi_energy = np.append(chi_energy, [mcres['enChi2']])
                     chi_vert = np.append(chi_vert, [mcres['vertChi2']])
                     sum_values = np.append(sum_values,chi_values)
-                    print(sum_values)
+#                    print(sum_values)
                     print("chi^2: " + str(sum(sum_values)/float(len(sum_values))))
                     time_values = np.append(time_values, t1-t0)
-                    print(time_values)
+#                    print(time_values)
                     print("time: " + str(sum(time_values)/float(len(sum_values)))) 
             except Exception:
                 continue        

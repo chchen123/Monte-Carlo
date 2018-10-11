@@ -14,6 +14,7 @@ import h5py
 import scipy
 from math import pi
 import pandas as pd
+import time
 
 #define user inputs for the Bash scripts
 data_path = '/home/chen/ar46/clean_events/clean_run_0130.h5'
@@ -49,6 +50,8 @@ chi_position = np.empty(shape=(0,0))
 chi_energy = np.empty(shape=(0,0))
 chi_vert = np.empty(shape=(0,0))
 
+sum_values = np.empty(shape=(0,0))
+time_values = np.empty(shape=(0,0))
 #writing output files
 with h5py.File(output_path, 'w') as outFile:
     gp0 = outFile.require_group('total')
@@ -134,15 +137,24 @@ with h5py.File(output_path, 'w') as outFile:
                     chi_position = np.append(chi_position, chi_result[0][0])
                     chi_energy = np.append(chi_energy, chi_result[0][1])
                     chi_vert = np.append(chi_vert, chi_result[0][2])
-                return sum(chi_result[0])
+                return (chi_result[0][0]+chi_result[0][1]+chi_result[0][2])
     
             #fit each event with differential evolution method
             try:
+                t0 = time.time()
                 results = scipy.optimize.differential_evolution(chi2, bounds,\
-                                                                maxiter=1000, strategy='best1bin', recombination=0.7, popsize=15, mutation=(0.5,1.5))
+                                                                maxiter=1000, strategy='rand1bin', recombination=0.9, popsize=10, mutation=0.8)
+                t1 = time.time()
                 if np.isnan(results.fun) == True: # disregard the NaN results
                     raise ValueError('event is not physical')
                 chi_values = np.append(chi_values, results.fun)
+
+                sum_values = np.append(sum_values,chi_values)
+#                print(sum_values)
+                print("chi^2: " + str(sum(sum_values)/float(len(sum_values))))
+                time_values = np.append(time_values, t1-t0)
+#                print(time_values)
+                print("time: " + str(sum(time_values)/float(len(sum_values))))
                 chi2(results.x,add_chi2=True)
             except Exception:
                 print('Differential evolution fitting failed for event with index '+str(evt_index))
