@@ -4,6 +4,7 @@
 Created on Sat Sep  8 15:00:52 2018
 
 @author: chen
+This Python script fits all the proton events of run_0130 using basin hopping method.
 """
 
 
@@ -140,7 +141,7 @@ with h5py.File(output_path, 'w') as outFile:
                     chi_vert = np.append(chi_vert, chi_result[0][2])
                 return (chi_result[0][0]+chi_result[0][1]+chi_result[0][2])
             
-            #fit each event with differential evolution method
+            #fit each event with basin hopping method
             try:
                 t0 = time.time()
                 results = scipy.optimize.basinhopping(chi2, ctr0, niter=25, T=0.01, \
