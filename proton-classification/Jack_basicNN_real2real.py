@@ -3,6 +3,7 @@
 """
 basicNN_real2real_multic.py
 ==========================
+Author: Jack Taylor
 Testing a basic neural network on nuclear scattering data.
 Trains on real tests on real data.
 """
