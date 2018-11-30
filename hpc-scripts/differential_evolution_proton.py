@@ -4,6 +4,7 @@
 Created on Sat Sep  8 13:25:16 2018
 
 @author: chen
+This script fits run_0130's proton tracks using differential evolution method
 """
 
 import numpy as np
