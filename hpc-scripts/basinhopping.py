@@ -134,7 +134,7 @@ with h5py.File(args.output, 'w') as outFile:
                 chi_vert = np.append(chi_vert, chi_result[0][2])
             return sum(chi_result[0])
         
-        #fit each event with differential evolution method
+        #fit each event with basin hopping method
         try:
             results = scipy.optimize.basinhopping(chi2, ctr0, niter=25, T=0.01, \
                                                   stepsize=0.05, minimizer_kwargs={"method": 'SLSQP'})
