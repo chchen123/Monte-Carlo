@@ -7,6 +7,8 @@
 #PBS -l pmem=5gb
 #PBS -m a
 #PBS -M chchen@davidson.edu
+
+#this bash script calls for data fitting python script to fit Ar40 data using Monte-Carlo method.
 RUN_NUM_PADDED=`printf "%04d" ${RUN_NUM}`
 
 CONFIG_FILE="/mnt/home/mkuchera/ATTPC/ar40_reqfiles/config_e15503a_runs_105-137.yml"
