@@ -3,6 +3,7 @@
 """
 basicNN_real2real_pCnoise.py
 ============================
+Author: Jack Taylor
 Testing a basic neural network on nuclear scattering data.
 Binary classification of protons and "everything else" (carbon and noise)
 Trains on real tests on real.
