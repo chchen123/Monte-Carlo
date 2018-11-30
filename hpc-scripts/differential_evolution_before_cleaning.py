@@ -5,6 +5,7 @@ Created on Fri Sep  7 16:00:05 2018
 
 @author: chen
 This script fits run_1030's first 1001 events with differential evolution.
+This script fits original, uncleaned events.
 """
 
 import numpy as np
