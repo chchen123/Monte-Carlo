@@ -8,6 +8,7 @@
 #PBS -M chchen@davidson.edu
 
 #This script submits PBS job commands to the hpc, using configurations and paths to all Ar46 files
+#This script calls for python file which fits Ar46 data without the cleaning process
 
 RUN_NUM=130
 RUN_NUM_PADDED=`printf "%04d" ${RUN_NUM}`
