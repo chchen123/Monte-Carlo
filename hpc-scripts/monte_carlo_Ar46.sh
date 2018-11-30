@@ -8,6 +8,7 @@
 #PBS -m a
 #PBS -M chchen@davidson.edu
 
+#this bash script calls for data fitting python script to fit Ar40 data using Monte-Carlo method.
 #This script submits PBS job commands to the hpc, using configurations and paths to all Ar46 files
 
 RUN_NUM_PADDED=`printf "%04d" ${RUN_NUM}`
