@@ -4,7 +4,7 @@
 Created on Sat Sep  8 15:00:52 2018
 
 @author: chen
-This Python script fits all the proton events of run_0130 using basin hopping method.
+This Python script fits all 179 hand-labeled proton events of run_0130 using basin hopping method.
 """
 
 
